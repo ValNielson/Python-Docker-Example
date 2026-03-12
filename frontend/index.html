@@ -1,0 +1,140 @@
+<HTML>
+<HEAD>
+<TITLE>~*~ The Guestbook ~*~</TITLE>
+</HEAD>
+<BODY BGCOLOR="#000080" TEXT="#00FF00" LINK="#FFFF00" VLINK="#FF00FF">
+
+<CENTER>
+<BR>
+<FONT SIZE="7" COLOR="#FF00FF"><B>~*~ WELCOME TO THE GUESTBOOK ~*~</B></FONT>
+<BR>
+<FONT SIZE="4" COLOR="#FFFF00"><I>** Sign in and leave your mark!! **</I></FONT>
+<BR>
+<IMG SRC="https://web.archive.org/web/2009/http://www.geocities.com/SouthBeach/Marina/4942/underconstruction.gif" ALT="Under Construction!">
+<BR><BR>
+<FONT SIZE="2" COLOR="#00FFFF">You are visitor #
+<FONT SIZE="4" COLOR="#FF0000"><B><SPAN ID="counter">???</SPAN></B></FONT>
+</FONT>
+<BR>
+<HR WIDTH="80%" COLOR="#FF00FF">
+</CENTER>
+
+<CENTER>
+<TABLE BORDER="3" CELLPADDING="10" BGCOLOR="#000000" WIDTH="60%">
+<TR><TD>
+<FONT SIZE="5" COLOR="#00FFFF"><B>CHECK IN HERE!</B></FONT>
+<BR><BR>
+<FORM ONSUBMIT="submitEntry(); return false;">
+<FONT SIZE="3" COLOR="#FFFFFF">
+Your Name:<BR>
+<INPUT TYPE="TEXT" ID="nameInput" SIZE="40" MAXLENGTH="100" STYLE="background-color: #333; color: #0f0; font-family: monospace; font-size: 16px; border: 2px inset;">
+<BR><BR>
+Your Message:<BR>
+<TEXTAREA ID="messageInput" ROWS="4" COLS="40" MAXLENGTH="500" STYLE="background-color: #333; color: #0f0; font-family: monospace; font-size: 16px; border: 2px inset;"></TEXTAREA>
+<BR><BR>
+<INPUT TYPE="SUBMIT" VALUE="** SIGN THE GUESTBOOK **" STYLE="background-color: #FF00FF; color: #FFFFFF; font-size: 18px; font-weight: bold; cursor: pointer; border: 3px outset; padding: 5px 15px;">
+</FONT>
+</FORM>
+<BR>
+<FONT SIZE="3" COLOR="#FF0000"><B><SPAN ID="status"></SPAN></B></FONT>
+</TD></TR>
+</TABLE>
+</CENTER>
+
+<BR>
+<CENTER>
+<HR WIDTH="80%" COLOR="#FF00FF">
+<FONT SIZE="5" COLOR="#FFFF00"><B>~*~ MESSAGE BOARD ~*~</B></FONT>
+<BR>
+<FONT SIZE="2" COLOR="#00FFFF"><I>See who else has checked in!</I></FONT>
+<HR WIDTH="80%" COLOR="#FF00FF">
+</CENTER>
+
+<CENTER>
+<DIV ID="entries">
+<FONT SIZE="3" COLOR="#808080"><I>Loading messages...</I></FONT>
+</DIV>
+</CENTER>
+
+<BR><BR>
+<CENTER>
+<HR WIDTH="80%" COLOR="#FF00FF">
+<FONT SIZE="2" COLOR="#808080">
+<BR>
+Best viewed in Netscape Navigator 3.0 at 800x600
+<BR>
+Made with love in 1997
+<BR>
+<A HREF="mailto:webmaster@guestbook.geocities.com">Email the Webmaster</A>
+<BR><BR>
+<FONT COLOR="#FF00FF">*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*</FONT>
+</FONT>
+</CENTER>
+
+<SCRIPT>
+var visitorCount = Math.floor(Math.random() * 90000) + 10000;
+document.getElementById("counter").innerText = visitorCount;
+
+function loadEntries() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/api/entries", true);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var entries = JSON.parse(xhr.responseText);
+            var html = "";
+            if (entries.length === 0) {
+                html = "<FONT SIZE='3' COLOR='#808080'><I>No entries yet... be the first to sign!</I></FONT>";
+            }
+            for (var i = 0; i < entries.length; i++) {
+                var e = entries[i];
+                var colors = ["#FF0000", "#00FF00", "#FFFF00", "#00FFFF", "#FF00FF", "#FF8800"];
+                var color = colors[i % colors.length];
+                html += "<TABLE BORDER='2' CELLPADDING='8' BGCOLOR='#000000' WIDTH='60%' STYLE='margin-bottom:10px;'>";
+                html += "<TR><TD>";
+                html += "<FONT SIZE='4' COLOR='" + color + "'><B>" + escapeHtml(e.name) + "</B></FONT>";
+                html += "<FONT SIZE='2' COLOR='#808080'> wrote on " + e.created_at + ":</FONT><BR>";
+                html += "<FONT SIZE='3' COLOR='#FFFFFF'>" + escapeHtml(e.message) + "</FONT>";
+                html += "</TD></TR></TABLE>";
+            }
+            document.getElementById("entries").innerHTML = html;
+        }
+    };
+    xhr.send();
+}
+
+function submitEntry() {
+    var name = document.getElementById("nameInput").value;
+    var message = document.getElementById("messageInput").value;
+    if (!name.trim() || !message.trim()) {
+        document.getElementById("status").innerText = "!! Please fill in both fields !!";
+        return;
+    }
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/entries", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            if (xhr.status === 201) {
+                document.getElementById("status").innerText = "~*~ Thanks for signing! ~*~";
+                document.getElementById("nameInput").value = "";
+                document.getElementById("messageInput").value = "";
+                loadEntries();
+            } else {
+                document.getElementById("status").innerText = "!! ERROR: Could not sign guestbook !!";
+            }
+        }
+    };
+    xhr.send(JSON.stringify({name: name, message: message}));
+}
+
+function escapeHtml(text) {
+    var div = document.createElement("div");
+    div.appendChild(document.createTextNode(text));
+    return div.innerHTML;
+}
+
+loadEntries();
+</SCRIPT>
+
+</BODY>
+</HTML>
