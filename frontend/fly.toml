@@ -1,0 +1,40 @@
+# Fly.io configuration for the guestbook frontend (Apache httpd)
+# Deploy with: fly launch / fly deploy from the frontend/ directory
+#
+# NOTE: You'll need to update httpd.conf to proxy to the backend's
+# Fly.io internal URL instead of "http://backend:5000". Options:
+#   1. Use Fly private networking: http://guestbook-backend.internal:5000
+#   2. Use the backend's public URL: https://guestbook-backend.fly.dev
+
+app = "guestbook-frontend"
+primary_region = "sjc"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 80
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 200
+    hard_limit = 250
+
+[[http_service.checks]]
+  grace_period = "5s"
+  interval = "30s"
+  method = "GET"
+  timeout = "5s"
+  path = "/"
+  protocol = "http"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
+
+[deploy]
+  strategy = "rolling"
