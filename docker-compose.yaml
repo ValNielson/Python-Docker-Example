@@ -1,0 +1,43 @@
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "6969:80"
+    networks:
+      - frontend-backend
+    depends_on:
+      - backend
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://guestbook:guestbook123@db:5432/guestbook
+    networks:
+      - frontend-backend
+      - backend-db
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: guestbook
+      POSTGRES_PASSWORD: guestbook123
+      POSTGRES_DB: guestbook
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - backend-db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U guestbook"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+networks:
+  frontend-backend:
+  backend-db:
+
+volumes:
+  pgdata:
